@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EcoPlanet Solar Frontend
 
-## Getting Started
+This frontend is integrated with the Django backend in `../solar_ecommerce`.
 
-First, run the development server:
+## Backend + Frontend Setup
+
+1. Start backend (`/home/paras/Documents/solar/solar_ecommerce`):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_data
+python manage.py runserver
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Start frontend (`/home/paras/Documents/solar/solar_ecommerce_frontend`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `http://localhost:3000`.
 
-## Learn More
+## Implemented Integration
 
-To learn more about Next.js, take a look at the following resources:
+- Product listing reads from `GET /api/products/`.
+- Category filter reads from `GET /api/products/categories/`.
+- Add to cart calls `POST /api/orders/cart/add/` (JWT access token required).
+- Contact page sends data to `POST /api/contacts/`.
+- Newsletter form sends data to `POST /api/contacts/newsletter/`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Auth endpoints:
+  - `POST /api/auth/register/`
+  - `POST /api/auth/login/`
+- Paste access token on the Products page before using Add to Cart.
 
-## Deploy on Vercel
+## Build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If Turbopack build is restricted in your environment, use webpack:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build -- --webpack
+```

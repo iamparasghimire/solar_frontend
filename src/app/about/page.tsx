@@ -5,21 +5,6 @@ import Link from 'next/link';
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="font-bold text-2xl text-blue-600">Solar E-Commerce</Link>
-            <div className="flex gap-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
-              <Link href="/products" className="text-gray-700 hover:text-blue-600">Products</Link>
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 font-bold border-b-2 border-blue-600">About</Link>
-              <Link href="/contact" className="text-gray-700 hover:text-blue-600">Contact</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Page Header */}
       <section className="bg-gradient-to-r from-blue-50 to-indigo-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

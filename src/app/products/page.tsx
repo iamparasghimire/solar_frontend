@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { addToCart, fetchCategories, fetchProducts, type Category, type Product } from '@/lib/api';
+import { fetchCategories, fetchProducts, type Category, type Product } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
+import { useCart } from '@/lib/cart-context';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -24,9 +26,9 @@ export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState(20000);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [accessToken, setAccessToken] = useState(
-    () => (typeof window !== 'undefined' ? localStorage.getItem('solar_access_token') || '' : ''),
-  );
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cartMessage, setCartMessage] = useState('');
@@ -71,45 +73,24 @@ export default function ProductsPage() {
   );
 
   const handleAddToCart = async (productId: string) => {
-    if (!accessToken.trim()) {
-      setCartMessage('Paste a JWT access token to add products to cart.');
+    if (!isAuthenticated) {
+      setCartMessage('Please login to add products to cart.');
+      setTimeout(() => setCartMessage(''), 3000);
       return;
     }
 
     try {
-      await addToCart({
-        productId,
-        quantity: 1,
-        accessToken: accessToken.trim(),
-      });
-      setCartMessage('Product added to cart.');
+      await addToCart(productId, 1);
+      setCartMessage('Product added to cart!');
+      setTimeout(() => setCartMessage(''), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not add product to cart.';
       setCartMessage(message);
     }
   };
 
-  const persistToken = (value: string) => {
-    setAccessToken(value);
-    localStorage.setItem('solar_access_token', value);
-  };
-
   return (
     <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="font-bold text-2xl text-blue-600">EcoPlanet Solar</Link>
-            <div className="flex gap-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
-              <Link href="/products" className="text-gray-700 hover:text-blue-600 font-bold border-b-2 border-blue-600">Products</Link>
-              <Link href="/about" className="text-gray-700 hover:text-blue-600">About</Link>
-              <Link href="/contact" className="text-gray-700 hover:text-blue-600">Contact</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <section className="bg-gradient-to-r from-blue-50 to-indigo-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Solar Products</h1>
@@ -118,17 +99,18 @@ export default function ProductsPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label className="block text-sm font-bold text-gray-900 mb-2">JWT Access Token (for Add to Cart)</label>
-          <input
-            type="text"
-            value={accessToken}
-            onChange={(e) => persistToken(e.target.value)}
-            placeholder="Paste token from /api/auth/login/"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {cartMessage ? <p className="mt-2 text-sm text-gray-700">{cartMessage}</p> : null}
-        </div>
+        {cartMessage && (
+          <div className={`mb-6 p-4 rounded-lg text-sm font-medium ${
+            cartMessage.includes('login') ? 'bg-amber-50 border border-amber-200 text-amber-700' : 
+            cartMessage.includes('added') ? 'bg-green-50 border border-green-200 text-green-700' :
+            'bg-red-50 border border-red-200 text-red-700'
+          }`}>
+            {cartMessage}
+            {cartMessage.includes('login') && (
+              <> <Link href="/login" className="underline font-bold">Login here</Link></>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="bg-gray-50 p-6 rounded-lg h-fit">
@@ -204,16 +186,20 @@ export default function ProductsPage() {
 
                   return (
                     <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition">
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 h-48 flex items-center justify-center border-b border-gray-200 overflow-hidden">
-                        {product.primary_image ? (
-                          <img src={product.primary_image} alt={product.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="text-6xl">☀️</div>
-                        )}
-                      </div>
+                      <Link href={`/products/${product.slug}`}>
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 h-48 flex items-center justify-center border-b border-gray-200 overflow-hidden">
+                          {product.primary_image ? (
+                            <img src={product.primary_image} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="text-6xl">☀️</div>
+                          )}
+                        </div>
+                      </Link>
                       <div className="p-6">
                         <p className="text-xs text-gray-500 font-bold uppercase mb-2">{product.category_name}</p>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">{product.name}</h3>
+                        <Link href={`/products/${product.slug}`}>
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 hover:text-blue-600 transition">{product.name}</h3>
+                        </Link>
                         <p className="text-sm text-gray-600 mb-2">Brand: {product.brand || 'N/A'}</p>
                         <p className="text-sm text-gray-600 mb-4">Capacity: {product.capacity || 'N/A'}</p>
 
